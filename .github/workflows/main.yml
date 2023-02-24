@@ -1,0 +1,35 @@
+name: Minecraft Server
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update && sudo apt-get install -y screen
+          sudo apt-get install -y zip
+
+      - name: Start server
+        run: screen -d -m bash start.sh
+
+      - name: Wait for server to start
+        run: sleep 60
+
+      - name: Backup server
+        run: |
+          zip -r backup.zip world/
+          mv backup.zip backups/
+
+      - name: Commit and push changes
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "Auto backup map"
+          commit_options: "--author 'Github Actions <actions@github.com>'"
+          branch: "main"
