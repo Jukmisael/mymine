@@ -2,17 +2,22 @@ name: Minecraft Bedrock Server
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      SERVER_NAME: myserver
+      BACKUP_DIR: backups
+      MAX_BACKUPS: 5
+      KEEPALIVE_URL: https://myserver.glitch.me/
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
     - name: Install dependencies
-      run: sudo apt-get update && sudo apt-get install -y curl unzip rsync
+      run: sudo apt-get update && sudo apt-get install -y curl unzip
     - name: Install Minecraft Server
       run: |
         mkdir server
@@ -20,21 +25,37 @@ jobs:
         cd server
         unzip bedrock-server.zip
         chmod +x bedrock_server
-    - name: Synchronize server with repository
-      run: |
-        rsync -avz --exclude=world/server.properties --exclude=world/permissions.json --exclude=world/whitelist.json server/ $GITHUB_WORKSPACE/
     - name: Start Minecraft Server
       run: |
-        nohup bash -c "cd server && LD_LIBRARY_PATH=. ./bedrock_server" > /dev/null 2>&1 &
-    - name: Backup Minecraft Server
+        cd server
+        screen -S $SERVER_NAME -d -m ./bedrock_server
+        sleep 30
+    - name: Keep server alive
       run: |
         while true; do
-          cd server
-          zip -r backup_$(date +"%Y-%m-%d_%H-%M-%S").zip world
-          cd $GITHUB_WORKSPACE
-          git add .
-          git commit -m "Sync server files"
-          git push
+          curl $KEEPALIVE_URL
           sleep 300
-        done
-      continue-on-error: true
+        done &
+    - name: Backup server
+      run: |
+        mkdir $BACKUP_DIR
+        while true; do
+          cd server
+          zip -r ../$BACKUP_DIR/backup_$(date +"%Y-%m-%d_%H-%M-%S").zip world
+          cd ..
+          # Remove old backups
+          ls -tp $BACKUP_DIR/*.zip | tail -n +$(( $MAX_BACKUPS + 1 )) | xargs -d '\n' rm --
+          sleep 300
+        done &
+    - name: Sync server files to repository
+      uses: EndBug/add-and-commit@v7
+      with:
+        author_name: "GitHub Actions"
+        author_email: "actions@github.com"
+        message: "Sync server files"
+        add: "."
+        branch: "main"
+        force: true
+        push: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.PAT }}
