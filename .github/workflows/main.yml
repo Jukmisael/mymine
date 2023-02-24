@@ -16,7 +16,7 @@ jobs:
     - name: Install Minecraft Server
       run: |
         mkdir server
-        curl -o server/bedrock-server.zip https://minecraft.net/en-us/download/server/bedrock/
+        curl -o server/bedrock-server.zip https://minecraft.azureedge.net/bin-linux/bedrock-server-1.19.62.01.zip
         cd server
         unzip bedrock-server.zip
         chmod +x bedrock_server
