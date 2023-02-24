@@ -23,13 +23,12 @@ jobs:
     - name: Start Minecraft Server
       run: cd server && LD_LIBRARY_PATH=. ./bedrock_server
     - name: Checkout repository
-  uses: actions/checkout@v2
-
-	- name: Copy server files to repository
-	  run: |
-	    cp -r server/* $GITHUB_WORKSPACE
-	    cd $GITHUB_WORKSPACE
-	    git add .
-	    git commit -m "Sync server files"
-	    git push
+  	uses: actions/checkout@v2
+    - name: Copy server files to repository
+    	run: |
+	   cp -r server/* $GITHUB_WORKSPACE
+	   cd $GITHUB_WORKSPACE
+	   git add .
+	   git commit -m "Sync server files"
+	   git push
 
