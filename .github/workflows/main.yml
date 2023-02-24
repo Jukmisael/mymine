@@ -5,57 +5,52 @@ on:
     branches: [main]
   workflow_dispatch:
 
+env:
+  SERVER_DIR: server
+  BACKUP_DIR: backup
+
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      SERVER_NAME: myserver
-      BACKUP_DIR: backups
-      MAX_BACKUPS: 5
-      KEEPALIVE_URL: https://myserver.glitch.me/
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
+      with:
+        submodules: 'recursive'
     - name: Install dependencies
-      run: sudo apt-get update && sudo apt-get install -y curl unzip
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y curl unzip git-lfs
+        git-lfs install --skip-smudge
     - name: Install Minecraft Server
       run: |
-        mkdir server
-        curl -o server/bedrock-server.zip https://minecraft.azureedge.net/bin-linux/bedrock-server-1.19.62.01.zip
-        cd server
+        mkdir $SERVER_DIR
+        cd $SERVER_DIR
+        curl -o bedrock-server.zip https://minecraft.azureedge.net/bin-linux/bedrock-server-1.19.62.01.zip
         unzip bedrock-server.zip
         chmod +x bedrock_server
     - name: Start Minecraft Server
       run: |
-        cd server
-        screen -S $SERVER_NAME -d -m ./bedrock_server
-        sleep 30
-    - name: Keep server alive
-      run: |
-        while true; do
-          curl $KEEPALIVE_URL
-          sleep 300
-        done &
-    - name: Backup server
+        cd $SERVER_DIR
+        LD_LIBRARY_PATH=. ./bedrock_server
+    - name: Backup Minecraft Server
       run: |
         mkdir $BACKUP_DIR
         while true; do
-          cd server
-          zip -r ../$BACKUP_DIR/backup_$(date +"%Y-%m-%d_%H-%M-%S").zip world
-          cd ..
-          # Remove old backups
-          ls -tp $BACKUP_DIR/*.zip | tail -n +$(( $MAX_BACKUPS + 1 )) | xargs -d '\n' rm --
+          cd $SERVER_DIR
+          tar -czf $BACKUP_DIR/backup_$(date +"%Y-%m-%d_%H-%M-%S").tar.gz world
+          cd $BACKUP_DIR
+          ls -t | tail -n +6 | xargs rm --
           sleep 300
         done &
-    - name: Sync server files to repository
-      uses: EndBug/add-and-commit@v7
-      with:
-        author_name: "GitHub Actions"
-        author_email: "actions@github.com"
-        message: "Sync server files"
-        add: "."
-        branch: "main"
-        force: true
-        push: true
-      env:
-        GITHUB_TOKEN: ${{ secrets.PAT }}
+        disown
+    - name: Keep Minecraft Server Running
+      run: |
+        while true; do
+          cd $SERVER_DIR
+          git add .
+          git commit -m "Auto-commit at $(date +'%Y-%m-%d %H:%M:%S')"
+          git push
+          sleep 60
+        done &
+        disown
