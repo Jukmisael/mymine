@@ -21,4 +21,5 @@ jobs:
         unzip bedrock-server.zip
         chmod +x bedrock_server
     - name: Start Minecraft Server
-      run: screen -d -m cd server && LD_LIBRARY_PATH=. ./bedrock_server
+      run: cd server && screen -d -m LD_LIBRARY_PATH=. ./bedrock_server
+
