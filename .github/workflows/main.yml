@@ -63,6 +63,6 @@ jobs:
         uses: peter-evans/repository-dispatch@v1
         with:
           token: ${{ secrets.PAT }}
-          repository: SEU_USUARIO/SEU_REPOSITORIO
+          repository: jukmisael/mymine
           event-type: backup-manual
 
