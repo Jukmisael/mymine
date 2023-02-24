@@ -21,11 +21,14 @@ jobs:
         unzip bedrock-server.zip
         chmod +x bedrock_server
     - name: Start Minecraft Server
-      run: cd server && LD_LIBRARY_PATH=. ./bedrock_server
-    - name: Copy server files to repository
       run: |
-        cp -r server/* $GITHUB_WORKSPACE
-        cd $GITHUB_WORKSPACE
-        git add .
-        git commit -m "Sync server files"
-        git push
+        cd server
+        LD_LIBRARY_PATH=. ./bedrock_server &
+        sleep 10
+    - name: Schedule Backup
+      run: |
+        while true; do
+          cd server
+          zip -r backup_$(date +"%Y-%m-%d_%H-%M-%S").zip world
+          sleep 300
+        done &
