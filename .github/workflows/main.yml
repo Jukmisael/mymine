@@ -59,10 +59,12 @@ jobs:
   trigger_manual_execution:
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger manual execution
-        uses: peter-evans/repository-dispatch@v1
-        with:
-          token: ${{ secrets.PAT }}
-          repository: jukmisael/mymine
-          event-type: backup-manual
+     - name: Dispatch manual backup event
+       uses: peter-evans/repository-dispatch@v1
+       with:
+        token: ${{ secrets.GH_TOKEN }}
+        repository: SEU_USUARIO/SEU_REPOSITORIO
+        event-type: backup-manual
+        client-payload: {}
+
 
