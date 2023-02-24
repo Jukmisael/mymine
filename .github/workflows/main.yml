@@ -26,9 +26,9 @@ jobs:
   	uses: actions/checkout@v2
     - name: Copy server files to repository
     	run: |
-	   cp -r server/* $GITHUB_WORKSPACE
-	   cd $GITHUB_WORKSPACE
-	   git add .
-	   git commit -m "Sync server files"
-	   git push
+	  cp -r server/* $GITHUB_WORKSPACE
+	  cd $GITHUB_WORKSPACE
+	  git add .
+	  git commit -m "Sync server files"
+	  git push
 
