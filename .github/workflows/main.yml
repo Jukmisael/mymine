@@ -63,8 +63,5 @@ jobs:
        uses: peter-evans/repository-dispatch@v1
        with:
         token: ${{ secrets.GH_TOKEN }}
-        repository: SEU_USUARIO/SEU_REPOSITORIO
+        repository: Jukmisael/mymine
         event-type: backup-manual
-        client-payload: {}
-
-
