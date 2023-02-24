@@ -12,7 +12,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
     - name: Install dependencies
-      run: sudo apt-get update && sudo apt-get install -y curl unzip
+      run: sudo apt-get update && sudo apt-get install -y curl unzip rsync
     - name: Install Minecraft Server
       run: |
         mkdir server
@@ -20,15 +20,21 @@ jobs:
         cd server
         unzip bedrock-server.zip
         chmod +x bedrock_server
+    - name: Synchronize server with repository
+      run: |
+        rsync -avz --exclude=world/server.properties --exclude=world/permissions.json --exclude=world/whitelist.json server/ $GITHUB_WORKSPACE/
     - name: Start Minecraft Server
       run: |
-        cd server
-        LD_LIBRARY_PATH=. ./bedrock_server &
-        sleep 10
-    - name: Schedule Backup
+        nohup bash -c "cd server && LD_LIBRARY_PATH=. ./bedrock_server" > /dev/null 2>&1 &
+    - name: Backup Minecraft Server
       run: |
         while true; do
           cd server
           zip -r backup_$(date +"%Y-%m-%d_%H-%M-%S").zip world
+          cd $GITHUB_WORKSPACE
+          git add .
+          git commit -m "Sync server files"
+          git push
           sleep 300
-        done &
+        done
+      continue-on-error: true
