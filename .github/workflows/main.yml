@@ -2,7 +2,7 @@ name: Minecraft Bedrock Server
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -12,37 +12,13 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
     - name: Install dependencies
-      run: |
-        sudo apt-get update && sudo apt-get install -y curl unzip git-lfs
-        git lfs install
-    - name: Download and extract Minecraft Bedrock Server
+      run: sudo apt-get update && sudo apt-get install -y curl unzip screen
+    - name: Install Minecraft Server
       run: |
         mkdir server
+        curl -o server/bedrock-server.zip https://minecraft.azureedge.net/bin-linux/bedrock-server-1.19.62.01.zip
         cd server
-        if test -f "bedrock_server.zip"; then
-            echo "Server already downloaded"
-        else
-            echo "Downloading server"
-            curl -o bedrock_server.zip https://minecraft.azureedge.net/bin-linux/bedrock-server-1.19.62.01.zip
-        fi
-        unzip -o bedrock_server.zip
+        unzip bedrock-server.zip
         chmod +x bedrock_server
-        cd ..
-    - name: Start Minecraft Bedrock Server
-      run: cd server && ./bedrock_server & keep_alive
-    - name: Backup Minecraft World
-      run: |
-        while true; do
-          cd server
-          zip -r backup_$(date +"%Y-%m-%d_%H-%M-%S").zip world
-          cd ..
-          mkdir -p backups
-          mv server/backup*.zip backups/
-          cd backups/
-          ls -t | tail -n +6 | xargs rm --
-          cd ..
-          git add backups/
-          git commit -m "Add new backup"
-          git push
-          sleep 300
-        done & keep_alive
+    - name: Start Minecraft Server
+      run: screen -d -m cd server && LD_LIBRARY_PATH=. ./bedrock_server
